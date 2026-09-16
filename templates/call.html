@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OCALL - Call</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,Arial,Helvetica,sans-serif}
+body{min-height:100vh;background:#0b1120;color:#fff;overflow:hidden}
+button{font-family:inherit}
+.call-page{height:100vh;display:flex;flex-direction:column;background:radial-gradient(circle at top,#172554 0,#0b1120 45%,#020617 100%)}
+.header{height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(15,23,42,.85);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(15px);z-index:10}
+.logo{font-size:25px;font-weight:800;letter-spacing:.5px;color:#60a5fa}
+.header-center{text-align:center}
+.call-type-title{font-size:14px;font-weight:700}
+.call-status{font-size:12px;color:#94a3b8;margin-top:3px}
+.header-right{display:flex;align-items:center;gap:8px}
+.status-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 10px #22c55e}
+.status-text{font-size:12px;color:#cbd5e1}
+.main{flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:25px;overflow:hidden}
+.video-layout{width:100%;height:100%;display:grid;grid-template-columns:1fr 280px;gap:18px}
+.video-main{position:relative;background:#020617;border:1px solid rgba(255,255,255,.08);border-radius:22px;overflow:hidden;min-height:300px;box-shadow:0 25px 70px rgba(0,0,0,.35)}
+.video-main video{width:100%;height:100%;object-fit:cover;background:#020617}
+.video-local{position:absolute;right:20px;bottom:20px;width:245px;height:155px;background:#111827;border:2px solid rgba(255,255,255,.15);border-radius:16px;overflow:hidden;box-shadow:0 15px 40px rgba(0,0,0,.45)}
+.video-local video{width:100%;height:100%;object-fit:cover}
+.video-label{position:absolute;left:15px;bottom:15px;padding:7px 11px;background:rgba(0,0,0,.65);border-radius:8px;font-size:12px;font-weight:600;backdrop-filter:blur(8px)}
+.local-label{position:absolute;left:10px;bottom:10px;padding:5px 8px;background:rgba(0,0,0,.65);border-radius:6px;font-size:11px}
+.side-panel{background:rgba(15,23,42,.75);border:1px solid rgba(255,255,255,.08);border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:25px;backdrop-filter:blur(15px)}
+.avatar{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;box-shadow:0 0 0 8px rgba(96,165,250,.08),0 20px 50px rgba(37,99,235,.3);margin-bottom:18px}
+.user-name{font-size:20px;font-weight:700;text-align:center;word-break:break-word}
+.user-state{font-size:13px;color:#94a3b8;margin-top:7px}
+.audio-layout{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.audio-card{width:100%;max-width:560px;text-align:center;background:rgba(15,23,42,.75);border:1px solid rgba(255,255,255,.08);border-radius:28px;padding:55px 30px;backdrop-filter:blur(18px);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.audio-avatar{width:135px;height:135px;border-radius:50%;margin:0 auto 25px;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:800;box-shadow:0 0 0 12px rgba(96,165,250,.06),0 25px 60px rgba(37,99,235,.3);animation:pulse 2s infinite}
+.audio-card.connected .audio-avatar{animation:none}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 12px rgba(96,165,250,.06),0 25px 60px rgba(37,99,235,.25)}50%{box-shadow:0 0 0 24px rgba(96,165,250,0),0 25px 60px rgba(37,99,235,.4)}}
+.audio-name{font-size:25px;font-weight:800}
+.audio-state{color:#94a3b8;font-size:14px;margin-top:8px}
+.timer{font-size:13px;color:#60a5fa;margin-top:12px;display:none}
+.controls-wrap{height:105px;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,.78);border-top:1px solid rgba(255,255,255,.07);backdrop-filter:blur(15px)}
+.controls{display:flex;align-items:center;gap:14px}
+.control{width:54px;height:54px;border:1px solid rgba(255,255,255,.1);border-radius:50%;background:#1e293b;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.control:hover{background:#334155;transform:translateY(-2px)}
+.control.active{background:#475569}
+.end-call{width:62px;height:62px;background:#ef4444;border:none;font-size:22px;margin:0 8px}
+.end-call:hover{background:#dc2626}
+.hidden{display:none!important}
+.incoming-overlay{position:fixed;inset:0;background:rgba(2,6,23,.88);backdrop-filter:blur(15px);display:none;align-items:center;justify-content:center;z-index:100}
+.incoming-card{width:calc(100% - 40px);max-width:390px;background:#111827;border:1px solid rgba(255,255,255,.1);border-radius:25px;padding:38px 28px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.incoming-avatar{width:85px;height:85px;margin:0 auto 20px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800}
+.incoming-card h2{font-size:22px;margin-bottom:8px}
+.incoming-card p{color:#94a3b8;font-size:14px;margin-bottom:28px}
+.incoming-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.incoming-buttons button{border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer}
+.accept{background:#22c55e;color:#fff}
+.accept:hover{background:#16a34a}
+.reject{background:#ef4444;color:#fff}
+.reject:hover{background:#dc2626}
+.disconnect-message{position:fixed;inset:0;background:rgba(2,6,23,.9);display:none;align-items:center;justify-content:center;z-index:90}
+.disconnect-box{text-align:center}
+.disconnect-icon{font-size:55px;margin-bottom:15px}
+.disconnect-box h2{font-size:24px;margin-bottom:8px}
+.disconnect-box p{color:#94a3b8;font-size:14px}
+@media(max-width:850px){
+.video-layout{grid-template-columns:1fr}
+.side-panel{display:none}
+.video-local{width:180px;height:120px;right:12px;bottom:12px}
+}
+@media(max-width:600px){
+.header{height:62px;padding:0 16px}
+.logo{font-size:21px}
+.header-center{max-width:150px}
+.call-type-title{font-size:12px}
+.status-text{display:none}
+.main{padding:12px}
+.video-main{border-radius:15px}
+.video-local{width:125px;height:90px}
+.controls-wrap{height:90px}
+.controls{gap:8px}
+.control{width:48px;height:48px;font-size:17px}
+.end-call{width:56px;height:56px}
+.audio-card{padding:40px 20px}
+.audio-avatar{width:110px;height:110px;font-size:42px}
+}
+</style>
+</head>
+<body>
+<div class="call-page">
+<header class="header">
+<div class="logo">OCALL</div>
+<div class="header-center">
+<div class="call-type-title" id="callTypeTitle">Video Call</div>
+<div class="call-status" id="callStatus">Connecting...</div>
+</div>
+<div class="header-right">
+<span class="status-dot"></span>
+<span class="status-text" id="connectionText">Connecting</span>
+</div>
+</header>
+<main class="main">
+<section class="video-layout" id="videoLayout">
+<div class="video-main">
+<video id="remoteVideo" autoplay playsinline></video>
+<div class="video-label" id="remoteLabel">Remote</div>
+<div class="video-local">
+<video id="localVideo" autoplay muted playsinline></video>
+<div class="local-label">You</div>
+</div>
+</div>
+<div class="side-panel">
+<div class="avatar" id="videoAvatar">U</div>
+<div class="user-name" id="videoUserName">User</div>
+<div class="user-state" id="videoUserState">Connecting...</div>
+</div>
+</section>
+<section class="audio-layout hidden" id="audioLayout">
+<div class="audio-card" id="audioCard">
+<div class="audio-avatar" id="audioAvatar">U</div>
+<div class="audio-name" id="audioUserName">User</div>
+<div class="audio-state" id="audioUserState">Connecting...</div>
+<div class="timer" id="callTimer">00:00</div>
+</div>
+</section>
+</main>
+<footer class="controls-wrap">
+<div class="controls">
+<button class="control" id="muteButton" title="Mute">🎙️</button>
+<button class="control" id="cameraButton" title="Camera">📷</button>
+<button class="control hidden" id="screenButton" title="Share Screen">🖥️</button>
+<button class="control end-call" id="endButton" title="End Call">📞</button>
+</div>
+</footer>
+</div>
+<div class="incoming-overlay" id="incomingCall">
+<div class="incoming-card">
+<div class="incoming-avatar" id="incomingAvatar">U</div>
+<h2 id="incomingTitle">Incoming Call</h2>
+<p id="incomingCaller">Someone is calling you...</p>
+<div class="incoming-buttons">
+<button class="accept" id="acceptCall">Accept</button>
+<button class="reject" id="rejectCall">Reject</button>
+</div>
+</div>
+</div>
+<div class="disconnect-message" id="disconnectMessage">
+<div class="disconnect-box">
+<div class="disconnect-icon">📞</div>
+<h2>Call Ended</h2>
+<p>Returning to dashboard...</p>
+</div>
+</div>
+<script>
+const currentUserId="{{ request.user.id }}";
+let targetUserId="{{ request.GET.user|default:'' }}";
+let callType="{{ request.GET.type|default:'video' }}";
+const incomingAccepted="{{ request.GET.accepted|default:'0' }}";
+let localStream=null;
+let peerConnection=null;
+let socket=null;
+let incomingCallerId=null;
+let incomingCallType=null;
+let pendingIceCandidates=[];
+let callStarted=false;
+let callSeconds=0;
+let timerInterval=null;
+const localVideo=document.getElementById("localVideo");
+const remoteVideo=document.getElementById("remoteVideo");
+const callStatus=document.getElementById("callStatus");
+const connectionText=document.getElementById("connectionText");
+const videoLayout=document.getElementById("videoLayout");
+const audioLayout=document.getElementById("audioLayout");
+const audioCard=document.getElementById("audioCard");
+const audioAvatar=document.getElementById("audioAvatar");
+const audioUserName=document.getElementById("audioUserName");
+const audioUserState=document.getElementById("audioUserState");
+const videoAvatar=document.getElementById("videoAvatar");
+const videoUserName=document.getElementById("videoUserName");
+const videoUserState=document.getElementById("videoUserState");
+const callTimer=document.getElementById("callTimer");
+const incomingCall=document.getElementById("incomingCall");
+const incomingCaller=document.getElementById("incomingCaller");
+const incomingAvatar=document.getElementById("incomingAvatar");
+const incomingTitle=document.getElementById("incomingTitle");
+const acceptCall=document.getElementById("acceptCall");
+const rejectCall=document.getElementById("rejectCall");
+const muteButton=document.getElementById("muteButton");
+const cameraButton=document.getElementById("cameraButton");
+const screenButton=document.getElementById("screenButton");
+const endButton=document.getElementById("endButton");
+const iceServers={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
+function setupCallUI(){
+const isAudio=callType==="audio";
+document.getElementById("callTypeTitle").textContent=isAudio?"Audio Call":"Video Call";
+if(isAudio){
+videoLayout.classList.add("hidden");
+audioLayout.classList.remove("hidden");
+cameraButton.classList.add("hidden");
+screenButton.classList.add("hidden");
+}else{
+videoLayout.classList.remove("hidden");
+audioLayout.classList.add("hidden");
+cameraButton.classList.remove("hidden");
+screenButton.classList.remove("hidden");
+}
+}
+function setStatus(text){
+callStatus.textContent=text;
+if(audioUserState)audioUserState.textContent=text;
+if(videoUserState)videoUserState.textContent=text;
+}
+function setRemoteUser(name){
+name=name||"User";
+const initial=name.charAt(0).toUpperCase();
+audioUserName.textContent=name;
+videoUserName.textContent=name;
+audioAvatar.textContent=initial;
+videoAvatar.textContent=initial;
+incomingAvatar.textContent=initial;
+}
+function startTimer(){
+if(callStarted)return;
+callStarted=true;
+callTimer.style.display="block";
+callSeconds=0;
+timerInterval=setInterval(function(){
+callSeconds++;
+const minutes=String(Math.floor(callSeconds/60)).padStart(2,"0");
+const seconds=String(callSeconds%60).padStart(2,"0");
+callTimer.textContent=minutes+":"+seconds;
+},1000);
+}
+function stopTimer(){
+if(timerInterval){
+clearInterval(timerInterval);
+timerInterval=null;
+}
+}
+function createWebSocket(){
+const protocol=window.location.protocol==="https:"?"wss":"ws";
+socket=new WebSocket(protocol+"://"+window.location.host+"/ws/call/");
+socket.onopen=function(){
+connectionText.textContent="Connected";
+setStatus("Ready");
+if(targetUserId&&incomingAccepted!=="1")startOutgoingCall();
+if(targetUserId&&incomingAccepted==="1")startAcceptedCall();
+};
+socket.onmessage=async function(event){
+try{
+const data=JSON.parse(event.data);
+if(data.type==="connection"){
+setStatus("Ready");
+return;
+}
+if(data.type==="call-request"){
+handleIncomingCall(data);
+return;
+}
+if(data.type==="call-accepted"){
+setStatus("Call accepted");
+await createOffer();
+return;
+}
+if(data.type==="call-rejected"){
+setStatus("Call rejected");
+showDisconnect("Call Rejected","The user rejected your call.");
+return;
+}
+if(data.type==="offer"){
+await handleOffer(data);
+return;
+}
+if(data.type==="answer"){
+await handleAnswer(data);
+return;
+}
+if(data.type==="ice-candidate"){
+await handleIceCandidate(data);
+return;
+}
+if(data.type==="call-ended"){
+showDisconnect("Call Ended","The other user ended the call.");
+return;
+}
+}catch(error){
+console.error("WebSocket message error:",error);
+}
+};
+socket.onclose=function(){
+connectionText.textContent="Disconnected";
+if(callStarted)showDisconnect("Call Disconnected","The connection was closed.");
+};
+socket.onerror=function(error){
+console.error("WebSocket error:",error);
+connectionText.textContent="Error";
+};
+}
+async function startOutgoingCall(){
+try{
+await startLocalMedia();
+setStatus("Calling...");
+sendSignal({
+type:"call-request",
+target_user_id:targetUserId,
+call_type:callType,
+sender_name:"{{ request.user.username }}"
+});
+}catch(error){
+console.error("Outgoing call error:",error);
+showDisconnect("Unable to Call","Camera or microphone permission is required.");
+}
+}
+async function startAcceptedCall(){
+try{
+await startLocalMedia();
+setStatus("Connecting...");
+sendSignal({
+type:"call-accepted",
+target_user_id:targetUserId
+});
+}catch(error){
+console.error("Accepted call error:",error);
+showDisconnect("Unable to Connect","Camera or microphone permission is required.");
+}
+}
+function handleIncomingCall(data){
+incomingCallerId=data.sender_id;
+incomingCallType=data.call_type||"video";
+targetUserId=incomingCallerId;
+callType=incomingCallType;
+const name=data.sender_name||"Someone";
+setRemoteUser(name);
+setupCallUI();
+incomingTitle.textContent=incomingCallType==="audio"?"Incoming Audio Call":"Incoming Video Call";
+incomingCaller.textContent=name+" is calling you...";
+incomingCall.style.display="flex";
+setStatus("Incoming call...");
+}
+acceptCall.onclick=async function(){
+incomingCall.style.display="none";
+targetUserId=incomingCallerId;
+callType=incomingCallType;
+setupCallUI();
+try{
+await startLocalMedia();
+setStatus("Connecting...");
+sendSignal({
+type:"call-accepted",
+target_user_id:incomingCallerId
+});
+}catch(error){
+console.error("Accept call error:",error);
+showDisconnect("Unable to Connect","Camera or microphone permission is required.");
+}
+};
+rejectCall.onclick=function(){
+incomingCall.style.display="none";
+if(incomingCallerId){
+sendSignal({
+type:"call-rejected",
+target_user_id:incomingCallerId
+});
+}
+showDisconnect("Call Rejected","Returning to dashboard...");
+};
+async function startLocalMedia(){
+if(localStream)return;
+const constraints=callType==="audio"?{audio:true,video:false}:{audio:true,video:true};
+try{
+localStream=await navigator.mediaDevices.getUserMedia(constraints);
+if(callType==="video"){
+localVideo.srcObject=localStream;
+localVideo.style.display="block";
+}else{
+localVideo.srcObject=null;
+localVideo.style.display="none";
+}
+}catch(error){
+console.error("Media error:",error);
+throw error;
+}
+}
+function createPeerConnection(){
+if(peerConnection)return peerConnection;
+peerConnection=new RTCPeerConnection(iceServers);
+if(localStream){
+localStream.getTracks().forEach(function(track){
+peerConnection.addTrack(track,localStream);
+});
+}
+peerConnection.ontrack=function(event){
+if(event.streams&&event.streams[0]){
+remoteVideo.srcObject=event.streams[0];
+}
+};
+peerConnection.onicecandidate=function(event){
+if(event.candidate&&targetUserId){
+sendSignal({
+type:"ice-candidate",
+target_user_id:targetUserId,
+candidate:event.candidate
+});
+}
+};
+peerConnection.onconnectionstatechange=function(){
+if(!peerConnection)return;
+const state=peerConnection.connectionState;
+if(state==="connected"){
+setStatus("Connected");
+audioCard.classList.add("connected");
+startTimer();
+}
+if(state==="connecting")setStatus("Connecting...");
+if(state==="disconnected"){
+showDisconnect("Call Disconnected","The other user is no longer connected.");
+}
+if(state==="failed"){
+showDisconnect("Connection Failed","The call connection was lost.");
+}
+if(state==="closed"){
+setStatus("Call Ended");
+}
+};
+return peerConnection;
+}
+async function createOffer(){
+try{
+createPeerConnection();
+const offer=await peerConnection.createOffer();
+await peerConnection.setLocalDescription(offer);
+sendSignal({
+type:"offer",
+target_user_id:targetUserId,
+offer:offer
+});
+setStatus("Calling...");
+}catch(error){
+console.error("Create offer error:",error);
+}
+}
+async function handleOffer(data){
+try{
+targetUserId=data.sender_id;
+if(!localStream)await startLocalMedia();
+createPeerConnection();
+await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+for(const candidate of pendingIceCandidates){
+try{
+await peerConnection.addIceCandidate(candidate);
+}catch(error){
+console.error("Queued ICE error:",error);
+}
+}
+pendingIceCandidates=[];
+const answer=await peerConnection.createAnswer();
+await peerConnection.setLocalDescription(answer);
+sendSignal({
+type:"answer",
+target_user_id:data.sender_id,
+answer:answer
+});
+setStatus("Connecting...");
+}catch(error){
+console.error("Handle offer error:",error);
+}
+}
+async function handleAnswer(data){
+try{
+if(!peerConnection)return;
+await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+for(const candidate of pendingIceCandidates){
+try{
+await peerConnection.addIceCandidate(candidate);
+}catch(error){
+console.error("Queued ICE error:",error);
+}
+}
+pendingIceCandidates=[];
+setStatus("Connected");
+}catch(error){
+console.error("Handle answer error:",error);
+}
+}
+async function handleIceCandidate(data){
+try{
+if(!data.candidate)return;
+const candidate=new RTCIceCandidate(data.candidate);
+if(!peerConnection||!peerConnection.remoteDescription){
+pendingIceCandidates.push(candidate);
+return;
+}
+await peerConnection.addIceCandidate(candidate);
+}catch(error){
+console.error("ICE error:",error);
+}
+}
+function sendSignal(data){
+if(socket&&socket.readyState===WebSocket.OPEN){
+data.sender_id=currentUserId;
+socket.send(JSON.stringify(data));
+}else{
+console.error("WebSocket is not connected");
+}
+}
+function toggleMute(){
+if(!localStream)return;
+const tracks=localStream.getAudioTracks();
+if(!tracks.length)return;
+tracks.forEach(function(track){
+track.enabled=!track.enabled;
+});
+const enabled=tracks.some(function(track){return track.enabled});
+muteButton.textContent=enabled?"🎙️":"🔇";
+muteButton.classList.toggle("active",!enabled);
+muteButton.title=enabled?"Mute":"Unmute";
+}
+function toggleCamera(){
+if(!localStream||callType==="audio")return;
+const tracks=localStream.getVideoTracks();
+if(!tracks.length)return;
+tracks.forEach(function(track){
+track.enabled=!track.enabled;
+});
+const enabled=tracks.some(function(track){return track.enabled});
+cameraButton.textContent=enabled?"📷":"🚫";
+cameraButton.classList.toggle("active",!enabled);
+cameraButton.title=enabled?"Turn Camera Off":"Turn Camera On";
+}
+async function toggleScreenShare(){
+if(callType==="audio"||!peerConnection)return;
+try{
+const screenStream=await navigator.mediaDevices.getDisplayMedia({video:true});
+const screenTrack=screenStream.getVideoTracks()[0];
+const sender=peerConnection.getSenders().find(function(item){
+return item.track&&item.track.kind==="video";
+});
+if(sender){
+await sender.replaceTrack(screenTrack);
+}
+screenTrack.onended=async function(){
+if(localStream){
+const cameraTrack=localStream.getVideoTracks()[0];
+if(cameraTrack&&sender)await sender.replaceTrack(cameraTrack);
+}
+};
+}catch(error){
+console.log("Screen share cancelled");
+}
+}
+function endCall(){
+if(targetUserId){
+sendSignal({
+type:"call-ended",
+target_user_id:targetUserId
+});
+}
+showDisconnect("Call Ended","Returning to dashboard...");
+}
+function showDisconnect(title,message){
+const box=document.getElementById("disconnectMessage");
+box.querySelector("h2").textContent=title;
+box.querySelector("p").textContent=message;
+box.style.display="flex";
+cleanup();
+setTimeout(function(){
+window.location.href="/dashboard/";
+},1200);
+}
+function cleanup(){
+stopTimer();
+if(localStream){
+localStream.getTracks().forEach(function(track){track.stop()});
+localStream=null;
+}
+if(peerConnection){
+peerConnection.close();
+peerConnection=null;
+}
+remoteVideo.srcObject=null;
+localVideo.srcObject=null;
+if(socket){
+socket.onclose=null;
+socket.close();
+socket=null;
+}
+}
+muteButton.onclick=toggleMute;
+cameraButton.onclick=toggleCamera;
+screenButton.onclick=toggleScreenShare;
+endButton.onclick=endCall;
+window.addEventListener("beforeunload",function(){
+if(socket&&socket.readyState===WebSocket.OPEN&&targetUserId){
+socket.send(JSON.stringify({
+type:"call-ended",
+target_user_id:targetUserId,
+sender_id:currentUserId
+}));
+}
+});
+setupCallUI();
+createWebSocket();
+</script>
+</body>
+</html>

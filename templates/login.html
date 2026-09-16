@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OCALL - Login</title>
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+body{
+min-height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+background:linear-gradient(135deg,#0f172a,#1e3a8a);
+padding:20px;
+}
+.login-container{
+width:100%;
+max-width:420px;
+background:#fff;
+border-radius:18px;
+padding:35px;
+box-shadow:0 20px 50px rgba(0,0,0,.25);
+}
+.logo{
+text-align:center;
+font-size:32px;
+font-weight:700;
+color:#2563eb;
+margin-bottom:8px;
+}
+.subtitle{
+text-align:center;
+color:#64748b;
+font-size:14px;
+margin-bottom:28px;
+}
+.error-message{
+background:#fee2e2;
+color:#b91c1c;
+padding:12px 14px;
+border-radius:8px;
+font-size:14px;
+margin-bottom:18px;
+}
+.form-group{
+margin-bottom:18px;
+}
+.form-group label{
+display:block;
+font-size:14px;
+font-weight:600;
+color:#334155;
+margin-bottom:7px;
+}
+.form-group input{
+width:100%;
+padding:13px 14px;
+border:1px solid #cbd5e1;
+border-radius:9px;
+outline:none;
+font-size:15px;
+transition:.2s;
+}
+.form-group input:focus{
+border-color:#2563eb;
+box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+.login-btn{
+width:100%;
+border:none;
+padding:14px;
+border-radius:9px;
+background:#2563eb;
+color:#fff;
+font-size:16px;
+font-weight:600;
+cursor:pointer;
+transition:.2s;
+margin-top:3px;
+}
+.login-btn:hover{
+background:#1d4ed8;
+}
+.register-text{
+text-align:center;
+margin-top:22px;
+font-size:14px;
+color:#64748b;
+}
+.register-text a{
+color:#2563eb;
+font-weight:600;
+text-decoration:none;
+}
+.register-text a:hover{
+text-decoration:underline;
+}
+.footer{
+text-align:center;
+margin-top:20px;
+font-size:12px;
+color:#94a3b8;
+}
+</style>
+</head>
+<body>
+<div class="login-container">
+<div class="logo">OCALL</div>
+<p class="subtitle">Sign in to connect with your friends</p>
+{% if error %}
+<p class="error-message">{{ error }}</p>
+{% endif %}
+<form method="POST">
+{% csrf_token %}
+<div class="form-group">
+<label for="username">Username</label>
+<input type="text" id="username" name="username" placeholder="Enter your username" required>
+</div>
+<div class="form-group">
+<label for="password">Password</label>
+<input type="password" id="password" name="password" placeholder="Enter your password" required>
+</div>
+<button type="submit" class="login-btn">Login</button>
+</form>
+<p class="register-text">Don't have an account? <a href="{% url 'register' %}">Register</a></p>
+<p class="footer">© 2026 OCALL. All rights reserved.</p>
+</div>
+</body>
+</html>

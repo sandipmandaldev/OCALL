@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>OCALL WebSocket Test</title>
+</head>
+<body>
+    <h1>OCALL Real-Time Connection</h1>
+    <p id="status">Connecting...</p>
+    <input type="text" id="message" placeholder="Enter message">
+    <button onclick="sendMessage()">Send</button>
+    <div id="messages"></div>
+    <script>
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socket = new WebSocket(`${protocol}//${window.location.host}/ws/call/`);
+
+        socket.onopen = function() {
+            document.getElementById('status').textContent = '🟢 Connected';
+        };
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const message = document.createElement('p');
+            message.textContent = data.message;
+            document.getElementById('messages').appendChild(message);
+        };
+        socket.onclose = function() {
+            document.getElementById('status').textContent = '🔴 Disconnected';
+        };
+        function sendMessage() {
+            const input = document.getElementById('message');
+            if (input.value.trim()) {
+                socket.send(JSON.stringify({
+                    'message':input.value
+                }));
+                input.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
